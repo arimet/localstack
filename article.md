@@ -75,7 +75,7 @@ sam build   # Build le projet
 sam deploy  # Déploie sur AWS
 ```
 
-Bien sur, vous pouvez ajouter des S3, des API Gateway, des permissions IAM, tout est géré dans le YAML. Je ne vais pas m'étendre là-dessus, les docs SAM sont très complètes (meme si bon courage pour trouver facilement l'information).
+Bien sur, vous pouvez ajouter des S3, des API Gateway, des permissions IAM, tout est géré dans le YAML. Nous n'allons pas nous étendre là-dessus, les docs SAM sont très complètes (meme si bon courage pour trouver facilement l'information).
 
 --------------- TODO ---------------
 Expliquez comment SAM sait où deployer. Pas trouvé l'info facilement.
@@ -87,7 +87,7 @@ Bon, c'est cool, mais ça ne répond toujours pas à une problématique. A chaqu
 
 LocalStack is a cloud service emulator that runs in a single container on your laptop or in your CI environment.
 
-- **Gratuit** : Pas de facture AWS qui explose. Mais des features premiums (je reviendrais dessus plus tard)
+- **Gratuit** : Pas de facture AWS qui explose. Mais des features premiums (nous reviendrons dessus plus tard)
 - **Rapide** : Deploy en 2 secondes au lieu de 2 minutes
 - **Safe** : Vous cassez rien sur le vrai AWS
 
@@ -156,7 +156,7 @@ Au bout d'un moment, vous allez avoir plusieurs Lambdas. Et il se peut que ces l
 
 Le soucis, c'est que les lambdas sont idépendante. Si vous avez une besoin d'une fonction entre deux lambdas, vous devez la copier-coller dans chaque Lambda.
 
-Enfin je mens, car **les Lambda Layers règlent ce problème.** Un Layer, c'est un package de code réutilisable que plusieurs Lambdas peuvent partager. 
+Enfin nous mentons, car **les Lambda Layers règlent ce problème.** Un Layer, c'est un package de code réutilisable que plusieurs Lambdas peuvent partager. 
 
 Dans notre cas, on va créer un Layer avec nos fonctions de formatage de réponses, comme ça toutes nos Lambdas retournent le même format JSON.
 
@@ -282,7 +282,7 @@ Soyons honnêtes, ce workaround a des défauts :
 
 1. **Pas de versioning** : Tous les Lambdas utilisent la même version du Layer
 2. **Pas ISO a AWS** : Sur AWS, la structure est différente. Après vous pouvez toujours payer.
-3. **Pas de hot-reload** : Meme si vous avez un volume monté, LocalStack "crée" le package au moment du déploiement. Donc si vous modifiez le code du Layer, il faut redeployer la Lambda. La version premium de LocalStack permet peut-être le hot-reload, je n'ai pas testé.
+3. **Pas de hot-reload** : Meme si vous avez un volume monté, LocalStack "crée" le package au moment du déploiement. Donc si vous modifiez le code du Layer, il faut redeployer la Lambda. La version premium de LocalStack permet peut-être le hot-reload, nous n'avons pas testé.
 
 ## Conclusion
 
@@ -301,6 +301,6 @@ Voilà comment on a setup notre environnement de dev Lambda. C'est pas parfait -
 
 Pour notre use case (backend SQL + Hasura + Lambdas Python pour les traitements complexes), c'est le setup idéal. On garde Hasura pour les requêtes CRUD classiques, et on sort l'artillerie Lambda quand on a besoin de Python.
 
-Si vous êtes dans une situation similaire, je vous encourage vraiment à tester LocalStack. Oui, il y a des petits hacks à faire (les Layers...), mais le gain en productivité est énorme.
+Si vous êtes dans une situation similaire, nous vous encourageons vraiment à tester LocalStack. Oui, il y a des petits hacks à faire (les Layers...), mais le gain en productivité est énorme.
 
 Et mention spéciale à SAM qui rend la gestion de l'infrastructure super simple.
