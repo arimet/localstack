@@ -1,0 +1,105 @@
+.PHONY: help install build deploy invoke test clean start-localstack stop-localstack status
+
+# Default target
+.DEFAULT_GOAL := help
+
+# Variables
+STACK_NAME = localstack-sam-app
+AWS_REGION = us-east-1
+LOCALSTACK_ENDPOINT = http://localhost:4566
+
+help: ## Show this help message
+	@echo 'Usage: make [target]'
+	@echo ''
+	@echo 'Available targets:'
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+install: ## Install dependencies with Poetry
+	@echo "Installing dependencies..."
+	poetry install
+	@echo "Installation complete!"
+
+start-localstack: ## Start LocalStack with Docker Compose
+	@echo "Starting LocalStack..."
+	docker compose up -d
+	@echo "Waiting for LocalStack to be ready..."
+	@sleep 10
+	@curl -s $(LOCALSTACK_ENDPOINT)/_localstack/health | grep -q "running" && echo "LocalStack is ready!" || echo "LocalStack might not be ready yet"
+
+stop-localstack: ## Stop LocalStack
+	@echo "Stopping LocalStack..."
+	docker compose down
+
+status: ## Check LocalStack status
+	@echo "Checking LocalStack status..."
+	@curl -s $(LOCALSTACK_ENDPOINT)/_localstack/health | python3 -m json.tool || echo "LocalStack is not running"
+
+build: ## Build SAM application
+	@echo "Building SAM application..."
+	poetry run samlocal build
+
+deploy: build ## Deploy to LocalStack
+	@echo "Deploying to LocalStack..."
+	poetry run samlocal deploy \
+		--config-env localstack \
+		--no-confirm-changeset \
+		--no-fail-on-empty-changeset \
+		--resolve-s3
+
+list-functions: ## List all deployed Lambda functions
+	@echo "Listing Lambda functions..."
+	@poetry run awslocal lambda list-functions --region $(AWS_REGION) --query 'Functions[*].[FunctionName,Runtime,LastModified]' --output table
+
+invoke-hello: ## Invoke Hello World function
+	@echo "Invoking Hello World function..."
+	@poetry run awslocal lambda invoke \
+		--function-name hello-world-function \
+		--region $(AWS_REGION) \
+		--log-type Tail \
+		--query 'LogResult' \
+		--output text /tmp/response.json | base64 -d
+	@echo "\nResponse:"
+	@cat /tmp/response.json | python3 -m json.tool
+
+invoke-hello-user: ## Invoke Hello User function
+	@echo "Invoking Hello User function..."
+	@poetry run awslocal lambda invoke \
+		--function-name hello-user-function \
+		--region $(AWS_REGION) \
+		--payload '{"pathParameters":{"user":"Developer"}}' \
+		--log-type Tail \
+		--query 'LogResult' \
+		--output text /tmp/response.json | base64 -d
+	@echo "\nResponse:"
+	@cat /tmp/response.json | python3 -m json.tool
+
+invoke-hello-post: ## Invoke Hello POST function
+	@echo "Invoking Hello POST function..."
+	@poetry run awslocal lambda invoke \
+		--function-name hello-post-function \
+		--region $(AWS_REGION) \
+		--payload '{"body":"{\"name\":\"Developer\",\"message\":\"Testing LocalStack\"}"}' \
+		--log-type Tail \
+		--query 'LogResult' \
+		--output text /tmp/response.json | base64 -d
+	@echo "\nResponse:"
+	@cat /tmp/response.json | python3 -m json.tool
+
+test: ## Run tests (placeholder)
+	@echo "Running tests..."
+	poetry run pytest tests/ -v
+
+clean: ## Clean build artifacts
+	@echo "Cleaning build artifacts..."
+	rm -rf .aws-sam
+	rm -rf .pytest_cache
+	rm -rf **/__pycache__
+	rm -rf **/.pytest_cache
+	rm -f /tmp/response.json
+	docker compose down -v
+
+full-deploy: start-localstack deploy list-functions ## Start LocalStack and deploy everything
+	@echo "Full deployment complete!"
+
+quick-test: invoke-hello invoke-hello-user invoke-hello-post ## Quick test all functions
+	@echo "All functions tested!"

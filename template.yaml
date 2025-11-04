@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  LocalStack SAM Application with Python Lambda Functions
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: python3.12
+    MemorySize: 256
+    Environment:
+      Variables:
+        ENVIRONMENT: local
+
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: hello-world-function
+      CodeUri: src/handlers/hello_world/
+      Handler: app.lambda_handler
+      Description: Simple Hello World Lambda function
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: get
+
+  HelloUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: hello-user-function
+      CodeUri: src/handlers/hello_user/
+      Handler: app.lambda_handler
+      Description: Hello Lambda with user parameter
+      Events:
+        HelloUser:
+          Type: Api
+          Properties:
+            Path: /hello/{user}
+            Method: get
+
+  HelloPostFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: hello-post-function
+      CodeUri: src/handlers/hello_post/
+      Handler: app.lambda_handler
+      Description: Hello Lambda with POST method
+      Events:
+        HelloPost:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: post
+
+Outputs:
+  HelloWorldApi:
+    Description: "API Gateway endpoint URL for Hello World function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+  
+  HelloWorldFunction:
+    Description: "Hello World Lambda Function ARN"
+    Value: !GetAtt HelloWorldFunction.Arn
+  
+  HelloUserFunction:
+    Description: "Hello User Lambda Function ARN"
+    Value: !GetAtt HelloUserFunction.Arn
+  
+  HelloPostFunction:
+    Description: "Hello POST Lambda Function ARN"
+    Value: !GetAtt HelloPostFunction.Arn
