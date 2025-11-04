@@ -304,3 +304,8 @@ Pour notre use case (backend SQL + Hasura + Lambdas Python pour les traitements 
 Si vous êtes dans une situation similaire, nous vous encourageons vraiment à tester LocalStack. Oui, il y a des petits hacks à faire (les Layers...), mais le gain en productivité est énorme.
 
 Et mention spéciale à SAM qui rend la gestion de l'infrastructure super simple.
+
+---
+Auteurs:
+- RIMET Anthony
+- BARRAT Thibault
