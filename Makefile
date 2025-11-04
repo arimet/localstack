@@ -65,6 +65,34 @@ invoke-hello: ## Invoke Hello World function
 	@echo "\nResponse:"
 	@cat /tmp/response.json | python3 -m json.tool
 
+invoke-hello-with-name: ## Invoke Hello World function with name parameter (usage: make invoke-hello-with-name NAME=Alice)
+	@echo "Invoking Hello World function with name=$(NAME)..."
+	@echo '{"queryStringParameters": {"name": "$(NAME)"}}' > /tmp/event.json
+	@poetry run awslocal lambda invoke \
+		--function-name hello-world-function \
+		--region $(AWS_REGION) \
+		--payload file:///tmp/event.json \
+		--log-type Tail \
+		--query 'LogResult' \
+		--output text /tmp/response.json | base64 -d
+	@echo "\nResponse:"
+	@cat /tmp/response.json | python3 -m json.tool
+	@rm /tmp/event.json
+
+invoke-hello-custom: ## Invoke with custom event (usage: make invoke-hello-custom EVENT='{"queryStringParameters":{"name":"Bob"}}')
+	@echo "Invoking Hello World function with custom event..."
+	@echo '$(EVENT)' > /tmp/event.json
+	@poetry run awslocal lambda invoke \
+		--function-name hello-world-function \
+		--region $(AWS_REGION) \
+		--payload file:///tmp/event.json \
+		--log-type Tail \
+		--query 'LogResult' \
+		--output text /tmp/response.json | base64 -d
+	@echo "\nResponse:"
+	@cat /tmp/response.json | python3 -m json.tool
+	@rm /tmp/event.json
+
 test: ## Run tests (placeholder)
 	@echo "Running tests..."
 	poetry run pytest tests/ -v
@@ -81,5 +109,5 @@ clean: ## Clean build artifacts
 full-deploy: start-localstack deploy list-functions ## Start LocalStack and deploy everything
 	@echo "Full deployment complete!"
 
-quick-test: invoke-hello ## Quick test all functions
+quick-test: invoke-hello invoke-hello-with-name ## Quick test all functions
 	@echo "All functions tested!"

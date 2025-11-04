@@ -17,12 +17,10 @@ Resources:
     Type: AWS::Serverless::LayerVersion
     Properties:
       LayerName: custom-utils-layer
-      Description: Custom utilities layer with display_something function
+      Description: Shared utilities layer with response formatting and greeting functions
       ContentUri: layers/custom_utils/
       CompatibleRuntimes:
         - python3.12
-        - python3.11
-        - python3.10
       RetentionPolicy: Delete
 
   HelloWorldFunction:
@@ -31,7 +29,7 @@ Resources:
       FunctionName: hello-world-function
       CodeUri: src/handlers/hello_world/
       Handler: app.lambda_handler
-      Description: Simple Hello World Lambda function
+      Description: Simple Lambda function demonstrating Lambda Layer integration
       Layers:
         - !Ref CustomUtilsLayer
       Events:

@@ -1,37 +1,39 @@
 """
-Simple Hello World Lambda function handler.
+User greeting Lambda function demonstrating Lambda Layers integration.
+
+This example shows how to build a simple yet professional Lambda function
+that uses custom utilities from a Lambda Layer.
 """
 import json
 from typing import Dict, Any
-from custom_utils import display_something
+from custom_utils import format_response, get_greeting
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
-    AWS Lambda handler function that returns a simple hello world message.
+    AWS Lambda handler that returns a personalized greeting.
 
     Args:
-        event: Lambda event object containing request data
+        event: Lambda event object (contains queryStringParameters)
         context: Lambda context object
 
     Returns:
-        Dict containing statusCode, headers, and body with hello message
+        API Gateway response with greeting message
     """
-    print(f"Received event: {json.dumps(event)}")
+    # Extract the name from query parameters (defaults to "World")
+    query_params = event.get("queryStringParameters") or {}
+    name = query_params.get("name", "World")
     
-    # Call the layer function
-    layer_message = display_something()
+    # Use the custom layer function to generate greeting
+    greeting_message = get_greeting(name)
     
-    return {
-        "statusCode": 200,
-        "headers": {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-        },
-        "body": json.dumps({
-            "message": "Hello from LocalStack Lambda!",
-            "function": "hello-world-function",
-            "layer_message": layer_message,
-            "request_id": context.request_id if hasattr(context, 'request_id') else 'N/A'
-        })
+    # Prepare response data
+    response_data = {
+        "message": greeting_message,
+        "user": name,
+        "source": "Lambda Layer Integration Example",
+        "request_id": context.request_id
     }
+    
+    # Use custom layer utility to format the response
+    return format_response(200, response_data)
