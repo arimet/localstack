@@ -32,7 +32,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         "message": greeting_message,
         "user": name,
         "source": "Lambda Layer Integration Example",
-        "request_id": context.request_id
+        "request_id": getattr(context, 'request_id', context.aws_request_id)
     }
     
     # Use custom layer utility to format the response

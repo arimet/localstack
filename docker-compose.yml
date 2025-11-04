@@ -14,6 +14,7 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
       - LAMBDA_EXECUTOR=docker
       - LAMBDA_DOCKER_NETWORK=localstack-sam-network
+      - LAMBDA_DOCKER_FLAGS=-v /var/www/hackday/localstack-test/layers:/opt/python:ro
       - PERSISTENCE=0
       - AWS_DEFAULT_REGION=eu-west-1
       - AWS_ACCESS_KEY_ID=test
@@ -23,6 +24,7 @@ services:
     volumes:
       - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/var/www/hackday/localstack-test/layers:/opt/python:ro"
     networks:
       - localstack-sam-network
 
