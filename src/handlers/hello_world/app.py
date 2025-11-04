@@ -3,6 +3,7 @@ Simple Hello World Lambda function handler.
 """
 import json
 from typing import Dict, Any
+from custom_utils import display_something
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -18,6 +19,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
     print(f"Received event: {json.dumps(event)}")
     
+    # Call the layer function
+    layer_message = display_something()
+    
     return {
         "statusCode": 200,
         "headers": {
@@ -27,6 +31,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         "body": json.dumps({
             "message": "Hello from LocalStack Lambda!",
             "function": "hello-world-function",
+            "layer_message": layer_message,
             "request_id": context.request_id if hasattr(context, 'request_id') else 'N/A'
         })
     }

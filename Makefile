@@ -5,7 +5,7 @@
 
 # Variables
 STACK_NAME = localstack-sam-app
-AWS_REGION = us-east-1
+AWS_REGION = eu-west-1
 LOCALSTACK_ENDPOINT = http://localhost:4566
 
 help: ## Show this help message
@@ -50,35 +50,15 @@ list-functions: ## List all deployed Lambda functions
 	@echo "Listing Lambda functions..."
 	@poetry run awslocal lambda list-functions --region $(AWS_REGION) --query 'Functions[*].[FunctionName,Runtime,LastModified]' --output table
 
+list-layers: ## List all deployed Lambda layers
+	@echo "Listing Lambda layers..."
+	@poetry run awslocal lambda list-layers --region $(AWS_REGION) --query 'Layers[*].[LayerName,LatestMatchingVersion.LayerVersionArn]' --output table
+
 invoke-hello: ## Invoke Hello World function
 	@echo "Invoking Hello World function..."
 	@poetry run awslocal lambda invoke \
 		--function-name hello-world-function \
 		--region $(AWS_REGION) \
-		--log-type Tail \
-		--query 'LogResult' \
-		--output text /tmp/response.json | base64 -d
-	@echo "\nResponse:"
-	@cat /tmp/response.json | python3 -m json.tool
-
-invoke-hello-user: ## Invoke Hello User function
-	@echo "Invoking Hello User function..."
-	@poetry run awslocal lambda invoke \
-		--function-name hello-user-function \
-		--region $(AWS_REGION) \
-		--payload '{"pathParameters":{"user":"Developer"}}' \
-		--log-type Tail \
-		--query 'LogResult' \
-		--output text /tmp/response.json | base64 -d
-	@echo "\nResponse:"
-	@cat /tmp/response.json | python3 -m json.tool
-
-invoke-hello-post: ## Invoke Hello POST function
-	@echo "Invoking Hello POST function..."
-	@poetry run awslocal lambda invoke \
-		--function-name hello-post-function \
-		--region $(AWS_REGION) \
-		--payload '{"body":"{\"name\":\"Developer\",\"message\":\"Testing LocalStack\"}"}' \
 		--log-type Tail \
 		--query 'LogResult' \
 		--output text /tmp/response.json | base64 -d
@@ -101,5 +81,5 @@ clean: ## Clean build artifacts
 full-deploy: start-localstack deploy list-functions ## Start LocalStack and deploy everything
 	@echo "Full deployment complete!"
 
-quick-test: invoke-hello invoke-hello-user invoke-hello-post ## Quick test all functions
+quick-test: invoke-hello ## Quick test all functions
 	@echo "All functions tested!"

@@ -15,7 +15,7 @@ services:
       - LAMBDA_EXECUTOR=docker
       - LAMBDA_DOCKER_NETWORK=localstack-sam-network
       - PERSISTENCE=0
-      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_DEFAULT_REGION=eu-west-1
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - LAMBDA_REMOTE_DOCKER=0

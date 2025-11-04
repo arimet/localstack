@@ -13,6 +13,18 @@ Globals:
         ENVIRONMENT: local
 
 Resources:
+  CustomUtilsLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: custom-utils-layer
+      Description: Custom utilities layer with display_something function
+      ContentUri: layers/custom_utils/
+      CompatibleRuntimes:
+        - python3.12
+        - python3.11
+        - python3.10
+      RetentionPolicy: Delete
+
   HelloWorldFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -20,6 +32,8 @@ Resources:
       CodeUri: src/handlers/hello_world/
       Handler: app.lambda_handler
       Description: Simple Hello World Lambda function
+      Layers:
+        - !Ref CustomUtilsLayer
       Events:
         HelloWorld:
           Type: Api
@@ -27,47 +41,7 @@ Resources:
             Path: /hello
             Method: get
 
-  HelloUserFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: hello-user-function
-      CodeUri: src/handlers/hello_user/
-      Handler: app.lambda_handler
-      Description: Hello Lambda with user parameter
-      Events:
-        HelloUser:
-          Type: Api
-          Properties:
-            Path: /hello/{user}
-            Method: get
-
-  HelloPostFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: hello-post-function
-      CodeUri: src/handlers/hello_post/
-      Handler: app.lambda_handler
-      Description: Hello Lambda with POST method
-      Events:
-        HelloPost:
-          Type: Api
-          Properties:
-            Path: /hello
-            Method: post
-
 Outputs:
-  HelloWorldApi:
-    Description: "API Gateway endpoint URL for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  
   HelloWorldFunction:
     Description: "Hello World Lambda Function ARN"
     Value: !GetAtt HelloWorldFunction.Arn
-  
-  HelloUserFunction:
-    Description: "Hello User Lambda Function ARN"
-    Value: !GetAtt HelloUserFunction.Arn
-  
-  HelloPostFunction:
-    Description: "Hello POST Lambda Function ARN"
-    Value: !GetAtt HelloPostFunction.Arn

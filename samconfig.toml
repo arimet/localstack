@@ -6,7 +6,7 @@ version = 0.1
 stack_name = "localstack-sam-app"
 resolve_s3 = false
 s3_prefix = "localstack-sam-app"
-region = "us-east-1"
+region = "eu-west-1"
 capabilities = "CAPABILITY_IAM"
 disable_rollback = true
 parameter_overrides = []
@@ -14,7 +14,7 @@ image_repositories = []
 
 [default.local_invoke]
 [default.local_invoke.parameters]
-region = "us-east-1"
+region = "eu-west-1"
 
 [default.build]
 [default.build.parameters]
@@ -26,7 +26,7 @@ parallel = true
 [localstack.deploy.parameters]
 stack_name = "localstack-sam-app"
 resolve_s3 = false
-region = "us-east-1"
+region = "eu-west-1"
 capabilities = "CAPABILITY_IAM"
 disable_rollback = true
 parameter_overrides = []

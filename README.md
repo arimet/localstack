@@ -47,6 +47,13 @@ pip install awscli-local[ver1]
 ├── pyproject.toml             # Poetry dependencies and project config
 ├── Makefile                   # Convenient commands for development
 ├── README.md                  # This file
+├── layers/
+│   └── custom_utils/          # Lambda layer with custom utilities
+│       ├── python/
+│       │   └── custom_utils/
+│       │       ├── __init__.py
+│       │       └── display.py
+│       └── README.md
 └── src/
     └── handlers/
         ├── hello_world/       # Simple GET endpoint
@@ -90,17 +97,41 @@ make full-deploy
 
 ## 📝 Lambda Functions
 
+All Lambda functions have access to the **custom-utils-layer** which provides shared utilities.
+
 ### 1. Hello World Function
 - **Endpoint**: GET `/hello`
 - **Description**: Simple hello world response
+- **Layer Functions**: Uses `display_something()` from custom_utils
 
 ### 2. Hello User Function
 - **Endpoint**: GET `/hello/{user}`
 - **Description**: Personalized greeting with path parameter
+- **Layer Functions**: Uses `display_something()` from custom_utils
 
 ### 3. Hello POST Function
 - **Endpoint**: POST `/hello`
 - **Description**: Processes JSON body with name and message
+- **Layer Functions**: Uses `display_something()` from custom_utils
+
+## 📦 Lambda Layers
+
+### Custom Utils Layer
+Located in `layers/custom_utils/`, this layer provides shared functionality across all Lambda functions.
+
+**Available Functions:**
+- `display_something()`: Prints and returns "This message comes from a package (via a Lambda Layer)"
+
+**Usage in Lambda:**
+```python
+from custom_utils import display_something
+
+def lambda_handler(event, context):
+    message = display_something()
+    # Use the message in your response
+```
+
+See `layers/custom_utils/README.md` for more details.
 
 ## 🧪 Testing
 
@@ -114,6 +145,12 @@ make status
 
 ```bash
 make list-functions
+```
+
+### List Deployed Layers
+
+```bash
+make list-layers
 ```
 
 ### Invoke Lambda Functions
@@ -138,20 +175,20 @@ make quick-test
 # Hello World
 aws --endpoint-url=http://localhost:4566 lambda invoke \
   --function-name hello-world-function \
-  --region us-east-1 \
+  --region eu-west-1 \
   response.json
 
 # Hello User with path parameter
 aws --endpoint-url=http://localhost:4566 lambda invoke \
   --function-name hello-user-function \
-  --region us-east-1 \
+  --region eu-west-1 \
   --payload '{"pathParameters":{"user":"John"}}' \
   response.json
 
 # Hello POST with JSON body
 aws --endpoint-url=http://localhost:4566 lambda invoke \
   --function-name hello-post-function \
-  --region us-east-1 \
+  --region eu-west-1 \
   --payload '{"body":"{\"name\":\"Jane\",\"message\":\"Hi there\"}"}' \
   response.json
 ```
@@ -167,6 +204,7 @@ Run `make help` to see all available commands:
 - `make build` - Build SAM application
 - `make deploy` - Deploy to LocalStack
 - `make list-functions` - List all Lambda functions
+- `make list-layers` - List all Lambda layers
 - `make invoke-hello` - Test Hello World function
 - `make invoke-hello-user` - Test Hello User function
 - `make invoke-hello-post` - Test Hello POST function

@@ -1,0 +1,2 @@
+# No external dependencies required for custom_utils layer
+# This file is here to ensure SAM properly processes the layer
