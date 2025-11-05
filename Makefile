@@ -59,6 +59,7 @@ invoke-hello: ## Invoke Hello World function
 	@poetry run awslocal lambda invoke \
 		--function-name hello-world-function \
 		--region $(AWS_REGION) \
+		--cli-binary-format raw-in-base64-out \
 		--log-type Tail \
 		--query 'LogResult' \
 		--output text /tmp/response.json | base64 -d
@@ -71,6 +72,7 @@ invoke-hello-with-name: ## Invoke Hello World function with name parameter (usag
 	@poetry run awslocal lambda invoke \
 		--function-name hello-world-function \
 		--region $(AWS_REGION) \
+		--cli-binary-format raw-in-base64-out \
 		--payload file:///tmp/event.json \
 		--log-type Tail \
 		--query 'LogResult' \
@@ -85,6 +87,7 @@ invoke-hello-custom: ## Invoke with custom event (usage: make invoke-hello-custo
 	@poetry run awslocal lambda invoke \
 		--function-name hello-world-function \
 		--region $(AWS_REGION) \
+		--cli-binary-format raw-in-base64-out \
 		--payload file:///tmp/event.json \
 		--log-type Tail \
 		--query 'LogResult' \
