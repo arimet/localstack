@@ -32,16 +32,18 @@ make full-deploy      # Build and deploy
 Lambda functions have access to the **custom-utils-layer** which provides shared utilities.
 
 ### 1. Hello World Function
+
 - **Endpoint**: GET `/hello`
 - **Description**: Simple hello world response
 
 ```bash
-make invoke-hello-world NAME="Anthony"
+make invoke-hello-with-name NAME="Anthony"
 ```
 
 ## 📦 Lambda Layers
 
 ### Custom Utils Layer
+
 Located in `layers/custom_utils/`, this layer provides shared functionality across all Lambda functions.
 
 ```python
