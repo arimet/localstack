@@ -1,11 +1,11 @@
 # LocalStack : Développer et Tester vos Lambda Functions en Local
 
-Dans un de nos  projet, on a un backend assez particulier : du full SQL avec Hasura en proxy devant. C'est super efficace pour les requêtes classiques, mais parfois on a besoin de faire des trucs plus complexes en Python.
+Dans un de nos  projets, on a un backend assez particulier : du full SQL avec Hasura en proxy devant. C'est super efficace pour les requêtes classiques, mais parfois on a besoin de faire des trucs plus complexes en Python.
 Et c'est là qu'AWS Lambda entre en jeu.
 
-Le problème ? Un developpement directement sur AWS, ça peut etre long et couter cher. Si vous devez passer par une équipe devops pour chaque modif, ça devient vite un cauchemar. Et vous ne pouvez pas tester localement. **LocalStack a changé la donne** : on peut maintenant développer et tester nos Lambdas en local
+Le problème ? Un développement directement sur AWS, ça peut être long et coûter cher. Si vous devez passer par une équipe devops pour chaque modification, ça devient vite un cauchemar. Et vous ne pouvez pas tester localement. **LocalStack a changé la donne** : on peut maintenant développer et tester nos Lambdas en local
 
-Cet article vous montre comment on a mis cette stack en places et les problèmes qu'on a rencontrés (spoiler : les Lambda Layers sur LocalStack, c'est payant).
+Cet article vous montre comment on a mis cette stack en place et les problèmes qu'on a rencontrés (spoiler : les Lambda Layers sur LocalStack, c'est payant).
 
 ## Lambda, c'est quoi exactement ?
 
@@ -24,6 +24,7 @@ def lambda_handler(event, context):
 ```
 
 Dans notre cas, on utilise les Lambdas pour :
+
 - Communiquer avec des S3
 - Envoyer des emails via des CRONs
 - Faire des calculs qui prendraient trop de temps en SQL
@@ -75,23 +76,51 @@ sam build   # Build le projet
 sam deploy  # Déploie sur AWS
 ```
 
-Bien sur, vous pouvez ajouter des S3, des API Gateway, des permissions IAM, tout est géré dans le YAML. Nous n'allons pas nous étendre là-dessus, les docs SAM sont très complètes (meme si bon courage pour trouver facilement l'information).
+Bien sur, vous pouvez ajouter des S3, des API Gateway, des permissions IAM, tout est géré dans le YAML. Nous n'allons pas nous étendre là-dessus, les docs SAM sont très complètes (même si bon courage pour trouver facilement l'information).
 
---------------- TODO ---------------
-Expliquez comment SAM sait où deployer. Pas trouvé l'info facilement.
------------------------------------------------
+### Comment SAM sait où déployer ?
 
-Bon, c'est cool, mais ça ne répond toujours pas à une problématique. A chaque fois qu'on veut tester, il faut déployer sur une vrai instante.  **LocalStack** résout ce problème.
+SAM ne « devine » pas la cible. Il s’appuie sur 2 choses :
+
+- Vos identifiants/paramètres AWS (profil/variables d’environnement) pour savoir dans quel compte et quelle région déployer.
+- Un fichier `samconfig.toml` (ou les options de la ligne de commande) pour mémoriser le nom du stack, la région, le bucket artefacts, etc.
+
+Concrètement :
+
+1. La première fois, lancez un déploiement guidé qui posera les bonnes questions et enregistrera les réponses.
+
+```bash
+sam deploy --guided
+```
+
+1. SAM enregistre ces choix dans `samconfig.toml` et les réutilise aux prochains `sam deploy`.
+
+Exemple minimal de `samconfig.toml` (généré par le guided):
+
+```toml
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "hello-world"
+region = "eu-west-1"
+resolve_s3 = true            # crée ou choisit un bucket pour les artefacts
+capabilities = "CAPABILITY_IAM"
+```
+
+- Le compte et la région viennent de l’AWS CLI que SAM utilise sous le capot: via `--profile`/`--region` ou les variables `AWS_PROFILE`, `AWS_ACCESS_KEY_ID/SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`.
+- Le déploiement est réalisé par CloudFormation dans le compte/région sélectionnés, avec le nom de stack indiqué.
+
+Bon, c'est cool, mais ça ne répond toujours pas à une problématique. A chaque fois qu'on veut tester, il faut déployer sur une vraie instance.  **LocalStack** résout ce problème.
 
 ## LocalStack : AWS sur votre machine
 
-LocalStack is a cloud service emulator that runs in a single container on your laptop or in your CI environment.
+LocalStack est un émulateur de service cloud qui s'exécute localement dans un conteneur ou dans votre environnement d'intégration continue.
 
 - **Gratuit** : Pas de facture AWS qui explose. Mais des features premiums (nous reviendrons dessus plus tard)
 - **Rapide** : Deploy en 2 secondes au lieu de 2 minutes
-- **Safe** : Vous cassez rien sur le vrai AWS
+- **Safe** : Vous ne cassez rien sur le vrai AWS
 
-Pour nous, ça améliore notre façon de développer. On peut tester directement l'appel à la lamda et non plus le code contenu dans la lamda (ca à sa nuance !).
+Pour nous, ça améliore notre façon de développer. On peut tester directement l'appel à la lamda et non plus le code contenu dans la lamda (ça a sa nuance !).
 
 ### Installation avec Docker
 
@@ -114,9 +143,9 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
 ```
 
-Démarrez avec
-
 #### Démarrage
+
+Démarrez avec
 
 ```bash
 docker compose up -d
@@ -131,6 +160,7 @@ pip install aws-sam-cli awscli-local
 ```
 
 Ensuite, le workflow de dev devient trivial
+
 ```bash
 # 1. Coder votre Lambda dans src/handlers/ et ajouter dans template.yaml
 
@@ -156,7 +186,7 @@ Au bout d'un moment, vous allez avoir plusieurs Lambdas. Et il se peut que ces l
 
 Le soucis, c'est que les lambdas sont idépendante. Si vous avez une besoin d'une fonction entre deux lambdas, vous devez la copier-coller dans chaque Lambda.
 
-Enfin nous mentons, car **les Lambda Layers règlent ce problème.** Un Layer, c'est un package de code réutilisable que plusieurs Lambdas peuvent partager. 
+Enfin nous mentons, car **les Lambda Layers règlent ce problème.** Un Layer, c'est un package de code réutilisable que plusieurs Lambdas peuvent partager.
 
 Dans notre cas, on va créer un Layer avec nos fonctions de formatage de réponses, comme ça toutes nos Lambdas retournent le même format JSON.
 
@@ -171,6 +201,7 @@ layers/
 ```
 
 **display.py** :
+
 ```python
 import json
 
@@ -219,7 +250,7 @@ def lambda_handler(event, context):
     return format_response(200, {"message": greeting})
 ```
 
-Simple, élégant, réutilisable. Sauf que... **ça marche pas sur LocalStack** 😅
+Simple, élégant, réutilisable. Sauf que... **ça ne marche pas sur LocalStack** 😅
 
 ## Le Problème des Layers sur LocalStack
 
@@ -289,14 +320,16 @@ Soyons honnêtes, ce workaround a des défauts :
 Voilà comment on a setup notre environnement de dev Lambda. C'est pas parfait - le workaround des Layers est un hack - mais ça marche et ça nous fait gagner un temps fou.
 
 **Le setup complet** :
+
 1. LocalStack pour émuler AWS en local
 2. SAM pour définir l'infrastructure
 3. Un workaround Docker pour les Layers
 4. Des Makefiles pour automatiser
 
 **Ce qui change dans le quotidien** :
+
 - Developement de bout en bout sur une feature en local
-- Tests illimités sans voir la facture AWS exploser
+- Tests illimités sans voir la facture AWS explosée
 - Tout le monde a le même environnement (docker-compose)
 
 Pour notre use case (backend SQL + Hasura + Lambdas Python pour les traitements complexes), c'est le setup idéal. On garde Hasura pour les requêtes CRUD classiques, et on sort l'artillerie Lambda quand on a besoin de Python.
@@ -307,5 +340,6 @@ Et mention spéciale à SAM qui rend la gestion de l'infrastructure super simple
 
 ---
 Auteurs:
+
 - RIMET Anthony
 - BARRAT Thibault
